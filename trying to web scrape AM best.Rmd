@@ -1,0 +1,45 @@
+---
+title: "AM Best web scrape"
+author: "Adrian Pizano"
+date: "8/3/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+NOTES:
+Nice!
+
+But there's a better way!!
+
+Let's use the SelectorGadget tool! The SelectorGadget tool (read about it and set it up in your browser selectorgadget.com) allows to inspect the particular part of the web page and better narrow down the html tags. This saves time and greatly reduces the effort of trial and error to grab the information in the Owner Name and Address section of the website.
+
+Using this tool, we selected the table we want and de-selected the Site Address portion of the table next to it. Doing so improved the SelectorGadget estimate of the html tags we *do* want (seen at bottom highlighted in blue).
+
+![](https://uofi.box.com/shared/static/as4pbwxnxdod2q1ah4aopn88im8xony2.png)
+
+This resulted in two html tags: ".col-xs-4:nth-child(3)" and ".inner-value". Trying those two tags out results in the more direct Owner Name and Address information.
+
+```{r webscraping03b}
+owners <- html_nodes(html, ".col-xs-4:nth-child(3) .inner-value")
+
+html_text(owners, trim=TRUE)
+```
+
+Great! 
+
+We used web scraping to grab the first property's owner names according to the Parcel Number 922116177018, and the result shows the owner name and address separated by new line characters `\n`. Again, we see this information verifies that the owner address is not the same as the rental property's address.
+
+Now, let's do this for all properties. The key will be to loop or vectorize this process. *Actually in the chunk below I am only doing this for the first 5 properties since this process takes a long time for all 1730 properties.* The most important thing that is changing with each iteration of a loop should be the parcel number. We can use an index-controlled loop such that that the index value of parcel number column increments until we reach 1730. Putting it all together, we yield the following vector of owner names and address. *We'll talk more about looping and speeding up loops with vectorization in Week 06.*
+
+Doing it on AM best
+```{r}
+library(tidyverse)
+library(rvest)
+html = read_html("https://ratings.ambest.com/SearchResults.aspx?URatingId=0&bl=0&AltSrc=1&PPP=&AltNum=0&Ext_User=&Ext_Misc=&Portal=0&Site=")
+html = read_html("https://ratings.ambest.com/SearchResults.aspx?URatingId=0&bl=0&AltSrc=1&PPP=&AltNum=0&Ext_User=&Ext_Misc=&Portal=0&Site=")
+fsr_ratings = html_nodes(html, "tr:nth-child(3) td , tr:nth-child(4) td, tr:nth-child(5) td, tr:nth-child(6) td, tr:nth-child(7) td, tr:nth-child(8) td, tr:nth-child(9) td, tr:nth-child(10) td, tr:nth-child(11) td, tr:nth-child(12) td, tr:nth-child(13) td, tr:nth-child(14) td, tr:nth-child(15) td, tr:nth-child(16) td, tr:nth-child(17) td, tr:nth-child(18) td, tr:nth-child(19) td, tr:nth-child(20) td, tr:nth-child(21) td, tr:nth-child(2) td")
+html_text(fsr_ratings, trim = TRUE)
+```
+
