@@ -58,27 +58,23 @@ html_text(fsr_ratings, trim = TRUE)
 #"tr:nth-child(3) td , tr:nth-child(4) td, tr:nth-child(5) td, tr:nth-child(6) td, tr:nth-child(7) td, tr:nth-child(8) td, tr:nth-child(9) td, tr:nth-child(10) td, tr:nth-child(11) td, tr:nth-child(12) td, tr:nth-child(13) td, tr:nth-child(14) td, tr:nth-child(15) td, tr:nth-child(16) td, tr:nth-child(17) td, tr:nth-child(18) td, tr:nth-child(19) td, tr:nth-child(20) td, tr:nth-child(21) td, tr:nth-child(2) td"
 html_text(fsr_ratings, trim = TRUE)
 ```
+
 Valorant mouse settings
+
+
 ```{r}
+library(tidyverse)
+library(rvest)
+not_work = c("table#table_1.responsive.display.nowrap.data-t.data-t.wpDataTable.wpDataTableID-64.dataTable")
+
+url = "https://prosettings.net/valorant-pro-settings-gear-list/"
+
 html = read_html(url)
-table = html_nodes(html, "tbody")
-texttable = html_table(table, trim= TRUE, fill = TRUE)
-######
-#html has tr w/ multiple td's
+#table = html_nodes(html, "tr.odd")
+#texttable = html_table(table, trim= TRUE, fill = TRUE)
 
-col_name<- url_parse %>%
-  html_nodes("th") %>%
-  html_text()
+texttable = html_nodes(html, "table") %>% html_table()
 
-mydata <- url_parse %>%
-  html_nodes("td") %>%
-  html_text()
-
-finaldata <- data.frame(matrix(mydata, ncol=7, byrow=TRUE))
-
-names(finaldata) <- col_name
-
-finaldata
 
 ```
 
