@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 NOTES:
-Nice!
+Nice! hello
 
 But there's a better way!!
 
