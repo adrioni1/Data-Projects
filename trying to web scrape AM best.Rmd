@@ -37,9 +37,31 @@ Doing it on AM best
 ```{r}
 library(tidyverse)
 library(rvest)
-html = read_html("https://ratings.ambest.com/SearchResults.aspx?URatingId=0&bl=0&AltSrc=1&PPP=&AltNum=0&Ext_User=&Ext_Misc=&Portal=0&Site=")
-html = read_html("https://ratings.ambest.com/SearchResults.aspx?URatingId=0&bl=0&AltSrc=1&PPP=&AltNum=0&Ext_User=&Ext_Misc=&Portal=0&Site=")
-fsr_ratings = html_nodes(html, "tr:nth-child(3) td , tr:nth-child(4) td, tr:nth-child(5) td, tr:nth-child(6) td, tr:nth-child(7) td, tr:nth-child(8) td, tr:nth-child(9) td, tr:nth-child(10) td, tr:nth-child(11) td, tr:nth-child(12) td, tr:nth-child(13) td, tr:nth-child(14) td, tr:nth-child(15) td, tr:nth-child(16) td, tr:nth-child(17) td, tr:nth-child(18) td, tr:nth-child(19) td, tr:nth-child(20) td, tr:nth-child(21) td, tr:nth-child(2) td")
-html_text(fsr_ratings, trim = TRUE)
-```
+library(RSelenium)
 
+url = "https://ratings.ambest.com/SearchResults.aspx?URatingId=3135249&bl=0&AltSrc=1&PPP=&AltNum=0&Ext_User=&Ext_Misc=&Portal=0&Site="
+
+
+driver <- RSelenium::rsDriver(browser = "chrome", port = 4831L,
+                              chromever =
+                                system2(command = "wmic",
+                                        args = 'datafile where name="C:\\\\Program Files\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe" get Version /value',
+                                        stdout = TRUE,
+                                        stderr = TRUE) %>%
+                                stringr::str_extract(pattern = "(?<=Version=)\\d+\\.\\d+\\.\\d+\\.") %>%
+                                magrittr::extract(!is.na(.)) %>%
+                                stringr::str_replace_all(pattern = "\\.",
+                                                         replacement = "\\\\.") %>%
+                                paste0("^",  .) %>%
+                                stringr::str_subset(string =
+                                                      binman::list_versions(appname = "chromedriver") %>%
+                                                      dplyr::last()) %>%
+                                as.numeric_version() %>%
+                                max() %>%
+                                as.character())
+remote_driver = driver[["client"]]
+remote_driver$navigate(url)
+
+table = remote_driver$findElement(using = "id",value = "MainContent_grdEntities")
+ambest_table = read_html(table$getElementAttribute("innerHTML")[[1]]) %>% html_nodes("tbody") %>% html_table()
+```
