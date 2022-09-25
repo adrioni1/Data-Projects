@@ -15,7 +15,7 @@ intents = discord.Intents.default()
 intents.members = True
 
 BOT_PREFIX = ("?", "!")
-TOKEN = 'OTk3NTg1MTM2NTQ5OTA0NDc1.GlX9J4.CibdeL7FUZd32DjfA1kr9O7cxHXptKp-bXvlTo'
+TOKEN = 'insert_token_here'
 
 client = Bot(command_prefix = BOT_PREFIX, intents=intents)
 
