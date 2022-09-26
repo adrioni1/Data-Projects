@@ -5,17 +5,17 @@ from discord.ext.commands import Bot
 import requests
 import json
 import pandas as pd
-
 import Voice_Channel
 from Voice_Channel import *
 from discord import FFmpegPCMAudio
 import asyncio
 
-intents = discord.Intents.default()
+intents = discord.Intents.all()
 intents.members = True
 
 BOT_PREFIX = ("?", "!")
-TOKEN = 'insert_token_here'
+import secure
+TOKEN = secure.token
 
 client = Bot(command_prefix = BOT_PREFIX, intents=intents)
 
