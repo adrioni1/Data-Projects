@@ -1,3 +1,4 @@
+import io
 import random
 import discord
 from discord import Game
@@ -5,17 +6,22 @@ from discord.ext.commands import Bot
 import requests
 import json
 import pandas as pd
-
+import matplotlib.pyplot as plt
+import numpy as np
 import Voice_Channel
+import Web_Scrape
 from Voice_Channel import *
 from discord import FFmpegPCMAudio
 import asyncio
 
-intents = discord.Intents.default()
+
+
+intents = discord.Intents.all()
 intents.members = True
 
 BOT_PREFIX = ("?", "!")
-TOKEN = 'insert_token_here'
+import secure
+TOKEN = secure.token
 
 client = Bot(command_prefix = BOT_PREFIX, intents=intents)
 
@@ -109,53 +115,17 @@ async def leave(ctx):
 
 #WEB SCRAPE#
 @client.command(pass_context=True,
-                aliases = ['bad_mouth','needs_soap','vulgar'])
-async def retrieve_messages(ctx):
-    messages = await ctx.channel.history(limit=500).flatten()
-
-    id_content = {}
-    id_name_score={}
-
-    for message in messages:
-        if (message.author.bot == False):
-            if message.author.id in id_content:
-                id_content[message.author.id].append(message.content.lower())
-            else:
-                id_content.setdefault(message.author.id,[message.content])
-                id_name_score[message.author.id] = [message.author.name,0]
-
-    print(id_content.keys())
-    print(id_name_score) #keeping different dictionaries with same key is very helpful!
-
-    #LIST PROCEEDING THIS COMMENT HAS SLURS BECAUSE THOSE ARE BAD WORDS, all lower case
-    with open('bad-words.txt') as f:
-        bad_words = f.read().splitlines()
-    del bad_words[0] #empty string in list at beggining
-    print(bad_words)
-
-    print(id_content)
-    print(id_name_score)
-    for key in id_content:                        #for person in dictionary
-        for content in id_content[key]:          #for message in values of dictionary
-            for word in content.split():
-                if word in bad_words:            #need to count every word in content
-                    id_name_score[key][1] = id_name_score[key][1]+1
-    await ctx.send('Need to buy soap for: \n' +
-                   str(id_name_score))
-
-            #go through said_only and match names, if no matching names then add new dictionary
-            #once matched or name made, add content to dictionary name
-    #end goal: have each distinct name with a long line of things sent, proabably dictionary format so no duplicate names {name:said}
+                aliases = ['vulgar_pie','bad_mouth','needs_soap','retrieve_messages'])
+async def vulgar(ctx):
+    await Web_Scrape.vulgar(ctx)
 
 
 
-#make list of each message, append content to each one
-    #d_col = {'name':[]}
-    #df = pd.DataFrame()
-    #print(len(messages))
-    #print(messages)
-    #i have list of messages, now i need to suck out author name(by name or by id#) and message content
-    #for i in messages
+
+
+
+
+
 ###############
 
 client.run(TOKEN)
