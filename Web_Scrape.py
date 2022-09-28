@@ -85,15 +85,18 @@ async def vulgar (ctx):
     data_stream_box = io.BytesIO()
 
     #make box plot
-    plt.boxplot(data= vulgar_df.T.iloc[:,1])
+    vulgar_df_box= vulgar_df.T
+    plt.boxplot(vulgar_df_box.iloc[:,1])
 
     #save content into data stream
     plt.savefig(data_stream_box, format='png', bbox_inches="tight",dpi=80)
     plt.close()
     data_stream_box.seek(0)
-    chart= discord.File(data_stream_box, filename=vulgar_df_box.png)
+    chart= discord.File(data_stream_box, filename='vulgar_df_box.png')
 
     #send box plot and clear data stream
     await ctx.send(file=chart)
     data_stream_box.seek(0)
     data_stream_box.truncate()
+    await ctx.send("Listen up Shinji, this is a box plot.\n"
+                   "The middle bar is the median, the box stretches to the 1st and 3rd quantiles, and the lines at the bottom and top are the maximum and minimum any one of us cursed-- ya got that? ")
