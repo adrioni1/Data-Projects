@@ -15,6 +15,7 @@ library(tidyverse)
 library(rvest)
 library(sqldf)
 library(RSelenium)
+library(splines)
 ```
 
 Valorant w/ Rselenium
@@ -22,7 +23,7 @@ Valorant w/ Rselenium
 
 url = "https://prosettings.net/valorant-pro-settings-gear-list/"
 
-driver <- RSelenium::rsDriver(browser = "chrome", port = 4882L,
+driver <- RSelenium::rsDriver(browser = "chrome", port = 4885L,
                               chromever =
                                 system2(command = "wmic",
                                         args = 'datafile where name="C:\\\\Program Files (x86)\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe" get Version /value',
@@ -56,38 +57,99 @@ colnames(valorant_table) = c("Team", "Name", "Mouse","HZ","DPI","Sensitivity","e
 `r valorant_table`
 
 
-Using Valorant Settings/Setups data
+**Using Valorant Settings/Setups data**
 ```{r}
 #valorant_table = read_csv('valorant_table.csv')
-#maybe GROUPBY and basic descriptive analysis in R
+```
+
+Cleaning Data
+```{r}
 sapply(valorant_table, class)     #checking which classes are correct
 valorant_table$HZ = str_replace(valorant_table$HZ,",","")     #clean data to change it to numeric
-col_num = c("HZ", "DPI", "eDPI")    #clean col name
-valorant_table[col_num] = sapply(valorant_table[col_num], as.double)
+col_num = c("HZ", "DPI","Sensitivity", "eDPI","Scoped Sensitivity","Moniter HZ")    #clean col name
+valorant_table[col_num] = sapply(valorant_table[col_num], as.numeric)
 sapply(valorant_table, class)     #changed col names
-#NEED TO GET RID OF ALL ROWS WITH NA
-#NEED TO GET RID OF ALL ROWS WITH NA
-#NEED TO GET RID OF ALL ROWS WITH NA
-#NEED TO GET RID OF ALL ROWS WITH NA
 
-#Settings only, no external peripherals
-sqldf("SELECT Team, avg(DPI) as 'Average Team DPI', avg(Sensitivity) as 'Average Team Sens.', avg(eDPI) as 'Average Team DPI', avg('Scoped Sensitivity') as 'Average Team Scoped Sens.'
-      FROM valorant_table
-      GROUP BY Team")
-
-pairs(valorant_table[lapply(valorant_table, class) == "numeric"])
-
-tapply(valorant_table$eDPI, valorant_table$Team, mean)
-mean(valorant_table$HZ[is.na(valorant_table$HZ)==FALSE])
-
-#How Sensitivity follows DPI
-DPI_Sens = lm(DPI ~ Sensitivity, data = valorant_table)
-plot(valorant_table$Sensitivity, valorant_table$DPI)
-  abline(DPI_Sens[1], DPI_Sens$coefficients[2])
-
-DPI_ScopedSens = lm(DPI ~ `Scoped Sensitivity`, data = valorant_table)
-plot(valorant_table$`Scoped Sensitivity`, valorant_table$DPI)
-  abline(DPI_ScopedSens$coefficients[1], DPI_ScopedSens$coefficients[2])
-
+Not_NA_InNumeric = is.na(valorant_table[col_num])==FALSE    #Only want rows with all TRUE (no NA)
+check_NA_Rows = c(rep(NA,length(Not_NA_InNumeric[,1])))
+for (i in 1:length(Not_NA_InNumeric[,1])){
+  if (sum(Not_NA_InNumeric[i,]) == length(col_num)){
+    check_NA_Rows[i] = TRUE
+  }
+  else{
+    check_NA_Rows[i] = FALSE
+  }
+  if (sum(valorant_table[col_num][i,]==0)!= 0  || is.na(sum(valorant_table[col_num][i,]==0))==TRUE ){ 
+    #want entire row to be all false (sum = 0) bc 0 is as good as NA, checks for NA to bc sum w NA is NA
+    check_NA_Rows[i] = FALSE}
+}
+valorant_table_noNA = valorant_table[as.vector(check_NA_Rows),] #gets rid of all rows w NAs or zeros in numeric cols
 
 ```
+
+Descriptive Statistics
+```{r}
+#Settings only, no external peripherals
+#sqldf("SELECT Team, avg(DPI) as 'Average Team DPI', avg(Sensitivity) as 'Average Team Sens.', avg(eDPI) as 'Average Team DPI', avg('Scoped Sensitivity') as 'Average Team Scoped Sens.'
+#      FROM valorant_table_noNA
+#      GROUP BY Team")
+pairs(valorant_table_noNA[lapply(valorant_table_noNA, class) == "numeric"])
+tapply(valorant_table_noNA$eDPI, valorant_table_noNA$Team, mean)  #eDPI is the sensitivity we want to look at
+```
+
+
+
+
+**WORK IN PROGRESS**
+
+
+
+How Sensitivity changes DPI: Linear
+```{r}
+DPI_Sens = lm(DPI ~ Sensitivity, data = valorant_table_noNA)
+summary(DPI_Sens)
+plot(valorant_table_noNA$Sensitivity, valorant_table_noNA$DPI)
+  abline(DPI_Sens[1], DPI_Sens$coefficients[2])
+```
+
+How Sensitivity changes DPI: Spline
+```{r}
+DPI_Sens_Spline = lm(DPI ~ ns(valorant_table_noNA$Sensitivity, knots=c(0,.2,.4,.6,.8,1)), data = valorant_table_noNA)
+summary(DPI_Sens_Spline)
+
+y_hat = predict(DPI_Sens_Spline, newdata=as.data.frame(valorant_table_noNA$Sensitivity))
+plot(valorant_table_noNA$Sensitivity, valorant_table_noNA$DPI)
+  lines(valorant_table_noNA$Sensitivity, y_hat)
+```
+
+How Scoped Sensitivity changes DPI: Linear
+```{r}
+DPI_ScopedSens = lm(DPI ~ `Scoped Sensitivity`, data = valorant_table_noNA)
+summary(DPI_ScopedSens)
+plot(valorant_table_noNA$`Scoped Sensitivity`, valorant_table_noNA$DPI)
+  abline(DPI_ScopedSens$coefficients[1], DPI_ScopedSens$coefficients[2])
+```
+How Scoped Sensitivity changes DPI: Natural spline
+```{r}
+DPI_ScopedSens_Spline = lm(DPI~ns(`Scoped Sensitivity`, df = 2), data=valorant_table_noNA)
+summary(DPI_ScopedSens_Spline)
+plot(valorant_table_noNA$`Scoped Sensitivity`,valorant_table_noNA$DPI)
+lines(valorant_table_noNA$`Scoped Sensitivity`, predict(DPI_ScopedSens_Spline))
+```
+
+How Scoped Sensitivity changes eDPI: Linear
+```{r}
+eDPI_ScopedSens = lm(eDPI ~ `Scoped Sensitivity`, data = valorant_table_noNA)
+summary(eDPI_ScopedSens)
+plot(valorant_table_noNA$`Scoped Sensitivity`, valorant_table_noNA$eDPI)
+  abline(eDPI_ScopedSens$coefficients[1], eDPI_ScopedSens$coefficients[2])
+```
+
+How Scoped Sensitivity changes eDPI: Splines
+```{r}
+eDPI_ScopedSens_Spline = lm(eDPI ~ ns(`Scoped Sensitivity`), data = valorant_table_noNA)
+summary(eDPI_ScopedSens_Spline)
+plot(valorant_table_noNA$`Scoped Sensitivity`, valorant_table_noNA$eDPI)
+lines(valorant_table_noNA$`Scoped Sensitivity`,predict(eDPI_ScopedSens_Spline))
+```
+
