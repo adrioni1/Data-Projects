@@ -1,0 +1,92 @@
+---
+title: "Master Carrier"
+output: html_document
+date: "2022-10-24"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Grabbing csvs
+```{r}
+library(tidyverse)
+library(readxl)
+master = read_xlsx('C:\\Users\\apizano\\Desktop\\master carrier\\Master Carrier List - 2022 meessin around.xlsx')
+Outlook_Contacts = read_csv('C:\\Users\\apizano\\Desktop\\master carrier\\contacts from lynn.csv')
+
+```
+
+Cleaning Master
+```{r}
+col_names = master[2,]
+colnames(master) = col_names
+colnames(master)
+master = master[-1,]
+```
+Title = Job title
+
+
+Cleaning Outlook Contacts
+```{r}
+colnames(Outlook_Contacts)
+#only need 10 cols to match w master
+# [1] "Carrier"            "Division/Specialty" "Title"              "Contact First"     
+ #[5] "Contact Last"       "Contact Email"      "Phone (Office)"     "Phone (Mobile)"    
+ #[9] "Notes:"             "Last Updated" 
+#division/specialty is related to plexus(p&c,exec risk, etc.)
+#no last updated col
+#so from outlook, only need 8
+Outlook_to_Master = Outlook_Contacts[,c("Company","Job Title","First Name","Last Name","E-mail Address","Business Phone","Mobile Phone","Notes")]
+```
+
+
+Converting Outlook_to_Master to Master format
+```{r}
+colnames(Outlook_to_Master)
+master_colnames = colnames(master)
+`Division/Specialty` = rep(NA, dim(Outlook_to_Master)[1])
+`Last Updated` = rep(NA, dim(Outlook_to_Master)[1])
+
+Outlook_to_Master$`Division/Specialty` = `Division/Specialty`
+Outlook_to_Master$`Last Updated` = `Last Updated`
+Outlook_to_Master = Outlook_to_Master[,c("Company","Division/Specialty","Job Title","First Name","Last Name","E-mail Address","Business Phone","Mobile Phone","Notes", "Last Updated")]
+#has all cols needed in right order of master, just need to change col names now
+colnames(Outlook_to_Master) = colnames(master)
+```
+
+Checking NAs in Outlook to master
+```{r}
+#Outlook_toMaster has all cols needed to fill into master
+
+#!is.na(Outlook_to_Master) #true means it is NOT NA, we want to count falses
+                          #if sum of row is 0, that means there is only na
+check_na = rep(TRUE,dim(Outlook_to_Master)[1])
+
+for (i in 1:dim(Outlook_to_Master)[1]){ #checks every row
+  if (sum(!is.na(Outlook_to_Master[i,]))==0){
+    check_na[i] = FALSE
+  }
+} 
+
+check_na
+#no na rows!
+```
+
+Adding Outlook to Master' to master
+```{r}
+#use email as key to make sure we dont add email twice
+library(sqldf)
+for (i in 1:dim(Outlook_to_Master)[1]){
+  if (Outlook_to_Master[i,'Contact Email'] in )
+}
+
+merge(x=master, y=Outlook_to_Master, by = intersect(names(master), names(Outlook_to_Master)), all.x=TRUE)
+full_join(master, Outlook_to_Master, by='Contact Email')
+```
+
+
+```{r}
+write_csv(Outlook_to_Master,'C:\\Users\\apizano\\Desktop\\master carrier\\Outlook_to_Master.csv')
+```
+
